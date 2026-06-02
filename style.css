@@ -1,0 +1,380 @@
+/* ===== 全局样式 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #fff;
+  position: relative;
+}
+
+/* ===== 头部 ===== */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.header p {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+/* ===== 主内容 ===== */
+.main {
+  padding: 20px;
+}
+
+/* ===== 步骤 ===== */
+.step {
+  margin-bottom: 24px;
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #333;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ===== 上传区域 ===== */
+.upload-area {
+  border: 2px dashed #d0d0d0;
+  border-radius: 16px;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #fafafa;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.upload-area.has-image {
+  padding: 12px;
+  border-style: solid;
+  border-color: #4caf50;
+  background: #fff;
+}
+
+.upload-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  font-size: 15px;
+  color: #555;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 10px;
+  display: none;
+}
+
+/* ===== 颜色选择 ===== */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.color-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: #f5f5f5;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-item:hover {
+  background: #eee;
+}
+
+.color-item.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.color-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.color-name {
+  font-size: 12px;
+  color: #666;
+}
+
+/* ===== 尺寸选择 ===== */
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.size-item {
+  padding: 12px 8px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.size-item:hover {
+  border-color: #667eea;
+}
+
+.size-item.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.size-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.size-desc {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 3px;
+}
+
+/* ===== 处理按钮 ===== */
+.process-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.process-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.process-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 结果页 ===== */
+.result-page {
+  display: none;
+  min-height: 100vh;
+  background: #fff;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.result-page.show {
+  display: block;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.result-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.result-container {
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.result-img {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.result-actions {
+  padding: 0 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.save-btn,
+.retry-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: #fff;
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.retry-btn {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.retry-btn:hover {
+  background: #eee;
+}
+
+/* ===== 进度遮罩 ===== */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-overlay.show {
+  display: flex;
+}
+
+.loading-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.loading-box .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #667eea;
+  margin: 0 auto 16px;
+}
+
+.loading-text {
+  font-size: 15px;
+  color: #555;
+}
+
+/* ===== 适配 ===== */
+@media (max-width: 360px) {
+  .color-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .size-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
