@@ -4,7 +4,7 @@
  */
 
 // ===== 配置 =====
-const API_BASE = window.location.origin; // 同源部署时自动使用当前域名
+const API_BASE = 'https://id-photo-pwa.vercel.app'; // Vercel 后端地址
 const COLOR_MAP = {
   blue: [67, 142, 219],
   red: [212, 35, 42],
