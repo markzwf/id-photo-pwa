@@ -225,6 +225,16 @@ body {
   cursor: not-allowed;
 }
 
+.model-status {
+  text-align: center;
+  padding: 12px;
+  margin: 0 0 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
 .spinner {
   display: inline-block;
   width: 18px;
