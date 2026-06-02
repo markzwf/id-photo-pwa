@@ -4,7 +4,7 @@
  */
 
 // ===== 配置 =====
-const API_BASE = 'https://id-photo-pwa.vercel.app'; // Vercel 后端地址
+const API_BASE = 'https://id-photo-pwa.vercel.app';
 const COLOR_MAP = {
   blue: [67, 142, 219],
   red: [212, 35, 42],
