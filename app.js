@@ -1,6 +1,6 @@
 /**
  * 证件照制作 - 纯前端版
- * 使用简单图像处理算法抠图（无需外部模型）
+ * 改进版：GrabCut风格前景检测 + 边缘优化
  */
 
 let state = {
@@ -22,7 +22,7 @@ const resultImg = $('#resultImg');
 const modelStatus = $('#modelStatus');
 
 function init() {
-  modelStatus.innerHTML = '✅ 就绪（无需加载模型）';
+  modelStatus.innerHTML = '✅ 就绪';
   modelStatus.style.color = '#28a745';
   processBtn.disabled = false;
 
@@ -108,93 +108,155 @@ function loadImage(file) {
   });
 }
 
+// ===== GrabCut 风格前景检测 =====
+function grabCutForeground(imageData, w, h) {
+  const data = imageData.data;
+  const mask = new Float32Array(w * h); // 0=背景, 1=前景
+
+  // 1. 初始化：用矩形框标记可能的前景区域（中心70%）
+  const marginX = Math.floor(w * 0.15);
+  const marginY = Math.floor(h * 0.15);
+
+  // 2. 采样边缘作为背景模型
+  const bgPixels = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (x < marginX || x >= w - marginX || y < marginY || y >= h - marginY) {
+        const i = (y * w + x) * 4;
+        bgPixels.push([data[i], data[i + 1], data[i + 2]]);
+      }
+    }
+  }
+
+  // 3. 采样中心作为前景模型
+  const fgPixels = [];
+  const cx = Math.floor(w / 2), cy = Math.floor(h / 2);
+  const fgRadius = Math.min(w, h) * 0.2;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      if (dist < fgRadius) {
+        const i = (y * w + x) * 4;
+        fgPixels.push([data[i], data[i + 1], data[i + 2]]);
+      }
+    }
+  }
+
+  // 4. 计算颜色直方图（简化版：用均值和方差）
+  function calcStats(pixels) {
+    const n = pixels.length;
+    if (n === 0) return { mean: [128, 128, 128], std: [50, 50, 50] };
+    const mean = [0, 0, 0];
+    pixels.forEach(([r, g, b]) => { mean[0] += r; mean[1] += g; mean[2] += b; });
+    mean[0] /= n; mean[1] /= n; mean[2] /= n;
+    const std = [0, 0, 0];
+    pixels.forEach(([r, g, b]) => {
+      std[0] += (r - mean[0]) ** 2;
+      std[1] += (g - mean[1]) ** 2;
+      std[2] += (b - mean[2]) ** 2;
+    });
+    std[0] = Math.sqrt(std[0] / n) + 1;
+    std[1] = Math.sqrt(std[1] / n) + 1;
+    std[2] = Math.sqrt(std[2] / n) + 1;
+    return { mean, std };
+  }
+
+  const bgStats = calcStats(bgPixels);
+  const fgStats = calcStats(fgPixels);
+
+  // 5. 计算每个像素属于前景/背景的概率
+  function colorDist(px, stats) {
+    const dr = (px[0] - stats.mean[0]) / stats.std[0];
+    const dg = (px[1] - stats.mean[1]) / stats.std[1];
+    const db = (px[2] - stats.mean[2]) / stats.std[2];
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  }
+
+  // 6. 迭代优化（简化GrabCut：3轮迭代）
+  for (let iter = 0; iter < 3; iter++) {
+    // 重新计算前景/背景统计
+    const fgUsed = [], bgUsed = [];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        const i = idx * 4;
+        const px = [data[i], data[i + 1], data[i + 2]];
+        const fgDist = colorDist(px, fgStats);
+        const bgDist = colorDist(px, bgStats);
+
+        // 边缘权重：越靠近边缘越可能是背景
+        const edgeX = Math.min(x, w - 1 - x) / (w / 2);
+        const edgeY = Math.min(y, h - 1 - y) / (h / 2);
+        const edgeWeight = Math.min(edgeX, edgeY);
+
+        // 距离中心的权重
+        const cx2 = (x / w - 0.5) * 2;
+        const cy2 = (y / h - 0.5) * 2;
+        const centerDist = Math.sqrt(cx2 * cx2 + cy2 * cy2);
+
+        // 综合判断
+        const fgScore = fgDist - bgDist + centerDist * 2 - edgeWeight * 1.5;
+        mask[idx] = fgScore < 0 ? 1 : 0;
+      }
+    }
+
+    // 重新统计
+    fgUsed.length = 0;
+    bgUsed.length = 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        const i = idx * 4;
+        if (mask[idx] > 0.5) {
+          fgUsed.push([data[i], data[i + 1], data[i + 2]]);
+        } else {
+          bgUsed.push([data[i], data[i + 1], data[i + 2]]);
+        }
+      }
+    }
+
+    if (fgUsed.length > 10) Object.assign(fgStats, calcStats(fgUsed));
+    if (bgUsed.length > 10) Object.assign(bgStats, calcStats(bgUsed));
+  }
+
+  // 7. 边缘平滑（高斯模糊近似）
+  const smoothMask = new Float32Array(w * h);
+  const kernel = [
+    [1, 2, 1],
+    [2, 4, 2],
+    [1, 2, 1]
+  ];
+  const kSum = 16;
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let sum = 0;
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          sum += mask[(y + ky) * w + (x + kx)] * kernel[ky + 1][kx + 1];
+        }
+      }
+      smoothMask[y * w + x] = sum / kSum;
+    }
+  }
+
+  return smoothMask;
+}
+
+// ===== 合成证件照 =====
 function compositeWithBackground(originalImg, bgColor, targetWidth, targetHeight) {
   const canvas = document.createElement('canvas');
   canvas.width = originalImg.width;
   canvas.height = originalImg.height;
   const ctx = canvas.getContext('2d');
-
-  // 画原图
   ctx.drawImage(originalImg, 0, 0);
 
-  // 获取像素数据
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-
-  // 简单的 GrabCut 前景检测：基于颜色聚类
-  // 这里用简单方法：假设背景是相对均匀的颜色，人物在中央区域
   const w = canvas.width;
   const h = canvas.height;
 
-  // 采样四角和边缘的颜色作为背景参考
-  const bgSamples = [];
-  const sampleSize = Math.floor(Math.min(w, h) * 0.05);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      // 只采样边缘像素
-      if (x < sampleSize || x >= w - sampleSize || y < sampleSize || y >= h - sampleSize) {
-        const i = (y * w + x) * 4;
-        bgSamples.push([data[i], data[i + 1], data[i + 2]]);
-      }
-    }
-  }
-
-  // 计算背景平均颜色
-  let bgR = 0, bgG = 0, bgB = 0;
-  bgSamples.forEach(([r, g, b]) => { bgR += r; bgG += g; bgB += b; });
-  bgR = Math.floor(bgR / bgSamples.length);
-  bgG = Math.floor(bgG / bgSamples.length);
-  bgB = Math.floor(bgB / bgSamples.length);
-
-  // 计算颜色阈值（标准差）
-  let sumDiff = 0;
-  bgSamples.forEach(([r, g, b]) => {
-    sumDiff += Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-  });
-  const threshold = Math.max(60, Math.floor(sumDiff / bgSamples.length * 2));
-
-  // 创建 mask：与背景颜色相近的是背景，其余是前景
-  const maskCanvas = document.createElement('canvas');
-  maskCanvas.width = w;
-  maskCanvas.height = h;
-  const maskCtx = maskCanvas.getContext('2d');
-  const maskData = maskCtx.createImageData(w, h);
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-
-    // 中心区域更可能是人物
-    const px = (i / 4) % w;
-    const py = Math.floor(i / 4 / w);
-    const centerDist = Math.sqrt(
-      Math.pow((px / w - 0.5) * 2, 2) + Math.pow((py / h - 0.5) * 2, 2)
-    );
-
-    // 边缘权重：越靠近边缘越可能是背景
-    const edgeWeight = Math.min(1, centerDist * 1.5);
-
-    if (diff < threshold * (0.5 + edgeWeight * 0.5)) {
-      // 背景 - 透明
-      maskData.data[i + 3] = 0;
-    } else {
-      // 前景 - 不透明
-      maskData.data[i + 3] = 255;
-    }
-  }
-  maskCtx.putImageData(maskData, 0, 0);
-
-  // 对 mask 进行模糊处理（平滑边缘）
-  maskCtx.filter = 'blur(3px)';
-  maskCtx.drawImage(maskCanvas, 0, 0);
-  maskCtx.filter = 'none';
-
-  // 重新读取 mask 数据，二值化
-  const maskData2 = maskCtx.getImageData(0, 0, w, h);
-  for (let i = 3; i < maskData2.data.length; i += 4) {
-    maskData2.data[i] = maskData2.data[i] > 128 ? 255 : 0;
-  }
-  maskCtx.putImageData(maskData2, 0, 0);
+  // GrabCut 前景检测
+  const mask = grabCutForeground(imageData, w, h);
 
   // 创建前景 canvas
   const fgCanvas = document.createElement('canvas');
@@ -202,8 +264,13 @@ function compositeWithBackground(originalImg, bgColor, targetWidth, targetHeight
   fgCanvas.height = h;
   const fgCtx = fgCanvas.getContext('2d');
   fgCtx.drawImage(originalImg, 0, 0);
-  fgCtx.globalCompositeOperation = 'destination-in';
-  fgCtx.drawImage(maskCanvas, 0, 0);
+
+  // 应用 mask（alpha 通道）
+  const fgData = fgCtx.getImageData(0, 0, w, h);
+  for (let i = 0; i < mask.length; i++) {
+    fgData.data[i * 4 + 3] = Math.floor(mask[i] * 255);
+  }
+  fgCtx.putImageData(fgData, 0, 0);
 
   // 合成到目标尺寸
   const outCanvas = document.createElement('canvas');
