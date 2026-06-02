@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>证件照制作</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- 头部 -->
+    <header class="header">
+      <h1>📸 证件照制作</h1>
+      <p>上传照片 · 智能抠图 · 一键换底色</p>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main">
+      <!-- 步骤 1：上传 -->
+      <section class="step" id="step1">
+        <div class="step-title">
+          <span class="step-num">1</span>
+          选择照片
+        </div>
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-content" id="uploadContent">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击上传或拖拽照片</div>
+            <div class="upload-hint">支持 JPG、PNG 格式，建议 2MB 以内</div>
+          </div>
+          <img class="preview-img" id="preview" alt="预览">
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+      </section>
+
+      <!-- 步骤 2：选底色 -->
+      <section class="step" id="step2">
+        <div class="step-title">
+          <span class="step-num">2</span>
+          选择底色
+        </div>
+        <div class="color-grid">
+          <button class="color-item active" data-color="blue">
+            <span class="color-dot" style="background: #438edb"></span>
+            <span class="color-name">蓝色</span>
+          </button>
+          <button class="color-item" data-color="red">
+            <span class="color-dot" style="background: #d4232a"></span>
+            <span class="color-name">红色</span>
+          </button>
+          <button class="color-item" data-color="white">
+            <span class="color-dot" style="background: #fff; border: 1px solid #ddd"></span>
+            <span class="color-name">白色</span>
+          </button>
+          <button class="color-item" data-color="green">
+            <span class="color-dot" style="background: #00a651"></span>
+            <span class="color-name">绿色</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 步骤 3：选尺寸 -->
+      <section class="step" id="step3">
+        <div class="step-title">
+          <span class="step-num">3</span>
+          选择尺寸
+        </div>
+        <div class="size-grid">
+          <button class="size-item active" data-w="295" data-h="413">
+            <span class="size-name">一寸</span>
+            <span class="size-desc">25×35mm</span>
+          </button>
+          <button class="size-item" data-w="413" data-h="579">
+            <span class="size-name">二寸</span>
+            <span class="size-desc">35×49mm</span>
+          </button>
+          <button class="size-item" data-w="107" data-h="142">
+            <span class="size-name">小一寸</span>
+            <span class="size-desc">22×32mm</span>
+          </button>
+          <button class="size-item" data-w="390" data-h="567">
+            <span class="size-name">大一寸</span>
+            <span class="size-desc">33×48mm</span>
+          </button>
+          <button class="size-item" data-w="358" data-h="441">
+            <span class="size-name">美国签证</span>
+            <span class="size-desc">51×51mm</span>
+          </button>
+          <button class="size-item" data-w="350" data-h="450">
+            <span class="size-name">日本签证</span>
+            <span class="size-desc">45×45mm</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 处理按钮 -->
+      <button class="process-btn" id="processBtn" disabled>
+        <span class="btn-text">🎨 开始处理</span>
+        <span class="btn-loading" hidden>
+          <span class="spinner"></span>
+          处理中...
+        </span>
+      </button>
+    </main>
+
+    <!-- 结果页 -->
+    <div class="result-page" id="resultPage">
+      <div class="result-header">
+        <button class="back-btn" id="backBtn">← 返回</button>
+        <h2>处理完成</h2>
+      </div>
+      <div class="result-container">
+        <img class="result-img" id="resultImg" alt="证件照">
+      </div>
+      <div class="result-actions">
+        <button class="save-btn" id="saveBtn">💾 保存到手机</button>
+        <button class="retry-btn" id="retryBtn">🔄 重新制作</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
